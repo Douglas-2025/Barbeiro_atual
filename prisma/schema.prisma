@@ -1,0 +1,39 @@
+// Configuração do Prisma para usar PostgreSQL
+// Por que: Define como o Prisma se conecta ao banco e gera código TypeScript
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // URL será lida do .env em runtime
+  // Formato: postgresql://usuario:senha@host:porta/database
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Agendamento - representa um agendamento na barbearia
+// Por que: Define estrutura da tabela no banco de dados
+model Agendamento {
+  id          String   @id @default(cuid()) // ID único gerado automaticamente
+  date        String   // Data no formato YYYY-MM-DD
+  time        String   // Horário no formato HH:MM
+  dateTime    DateTime // Data e hora combinadas (para ordenação)
+  clientName  String   // Nome do cliente
+  clientPhone String   // Telefone do cliente (pode ser usado para WhatsApp)
+  clientWhatsApp String? // WhatsApp do cliente (formato: 5511999999999)
+  service     String   // Tipo de serviço (corte, barba, combo)
+  duration    Int      @default(30) // Duração em minutos
+  price       Float    // Valor do serviço em reais
+  status      String   @default("pendente") // Status: pendente, confirmado, cancelado, concluido
+  whatsappEnviado Boolean @default(false) // Indica se mensagem WhatsApp foi enviada
+  createdAt   DateTime @default(now()) // Data de criação (automático)
+  updatedAt   DateTime @updatedAt // Data de atualização (automático)
+  
+  // Índice para consultas rápidas por data
+  // Por que: Acelera buscas quando filtramos por data
+  @@index([date])
+  @@index([status])
+  @@index([whatsappEnviado])
+}
+
