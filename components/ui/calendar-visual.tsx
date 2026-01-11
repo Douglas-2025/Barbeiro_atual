@@ -1,238 +1,168 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-// Componente de calendário visual melhorado para agendamentos
-// Por que: Interface intuitiva que mostra agendamentos em formato de calendário mensal com tema escuro
+interface Agendamento {
+  id: string
+  date: string
+  time: string
+  clientName: string
+  service: string
+  status: string
+}
+
 interface CalendarVisualProps {
-  agendamentos: Array<{
-    id: string
-    date: string
-    time: string
-    clientName: string
-    service: string
-    status: string
-  }>
+  agendamentos: Agendamento[]
   onDateSelect?: (date: string) => void
   selectedDate?: string
 }
 
-export function CalendarVisual({ agendamentos, onDateSelect, selectedDate }: CalendarVisualProps) {
-  const [currentDate, setCurrentDate] = useState(new Date())
+export function CalendarVisual({
+  agendamentos,
+  onDateSelect,
+  selectedDate,
+}: CalendarVisualProps) {
+  const [currentDate, setCurrentDate] = useState(() => {
+    const d = new Date()
+    d.setDate(1)
+    return d
+  })
 
-  // Nomes dos meses em português
   const meses = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
   ]
 
-  // Nomes dos dias da semana
   const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 
-  // Obtém primeiro dia do mês e quantos dias tem o mês
-  const primeiroDiaMes = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-  const ultimoDiaMes = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
-  const diasNoMes = ultimoDiaMes.getDate()
-  const diaInicioSemana = primeiroDiaMes.getDay()
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
 
-  // Gera array de dias do mês
-  const dias = Array.from({ length: diasNoMes }, (_, i) => i + 1)
+  const primeiroDiaSemana = new Date(year, month, 1).getDay()
+  const diasNoMes = new Date(year, month + 1, 0).getDate()
 
-  // Busca agendamentos de uma data específica
-  const getAgendamentosDoDia = (dia: number) => {
-    const dataStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
-    return agendamentos.filter(a => a.date === dataStr)
-  }
+  const hoje = useMemo(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d
+  }, [])
 
-  // Navega para mês anterior
-  const mesAnterior = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
-  }
+  const agendamentosPorData = useMemo(() => {
+    return agendamentos.reduce<Record<string, Agendamento[]>>((acc, a) => {
+      acc[a.date] ??= []
+      acc[a.date].push(a)
+      return acc
+    }, {})
+  }, [agendamentos])
 
-  // Navega para próximo mês
-  const proximoMes = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
-  }
+  const isPastDate = (dateStr: string) =>
+    new Date(`${dateStr}T00:00:00`) < hoje
 
-  // Verifica se data é hoje
-  const isHoje = (dia: number) => {
-    const hoje = new Date()
-    return (
-      dia === hoje.getDate() &&
-      currentDate.getMonth() === hoje.getMonth() &&
-      currentDate.getFullYear() === hoje.getFullYear()
-    )
-  }
-
-  // Verifica se data está selecionada
-  const isSelecionada = (dia: number) => {
-    if (!selectedDate) return false
-    const dataStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
-    return selectedDate === dataStr
-  }
-
-  // Verifica se data está no passado
-  // Por que: Desabilita datas passadas para prevenir agendamentos inválidos
-  const isPastDate = (dia: number) => {
-    const dataStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
-    const dataObj = new Date(dataStr + 'T00:00:00')
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
-    return dataObj < hoje
-  }
-
-  // Obtém cor do status
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmado':
-        return 'bg-green-500/20 border-green-500/50'
-      case 'pendente':
-        return 'bg-yellow-500/20 border-yellow-500/50'
-      case 'cancelado':
-        return 'bg-red-500/20 border-red-500/50'
-      case 'concluido':
-        return 'bg-blue-500/20 border-blue-500/50'
+      case "confirmado":
+        return "bg-green-500/20 border-green-500/50"
+      case "pendente":
+        return "bg-yellow-500/20 border-yellow-500/50"
+      case "cancelado":
+        return "bg-red-500/20 border-red-500/50"
+      case "concluido":
+        return "bg-blue-500/20 border-blue-500/50"
       default:
-        return 'bg-gray-500/20 border-gray-500/50'
+        return "bg-muted border-border"
     }
   }
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 shadow-lg">
-      {/* Cabeçalho do calendário */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm">
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between mb-4">
         <Button
           variant="ghost"
           size="icon"
-          onClick={mesAnterior}
-          className="hover:bg-accent"
-          asChild={false}
+          onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        
-        <h2 className="text-xl font-bold text-foreground">
-          {meses[currentDate.getMonth()]} {currentDate.getFullYear()}
+
+        <h2 className="text-lg sm:text-xl font-semibold">
+          {meses[month]} {year}
         </h2>
-        
+
         <Button
           variant="ghost"
           size="icon"
-          onClick={proximoMes}
-          className="hover:bg-accent"
-          asChild={false}
+          onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
         >
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
 
       {/* Dias da semana */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
-        {diasSemana.map((dia) => (
-          <div
-            key={dia}
-            className="text-center text-sm font-semibold text-muted-foreground py-2"
-          >
-            {dia}
-          </div>
-        ))}
+      <div className="grid grid-cols-7 text-center text-xs font-medium text-muted-foreground mb-2">
+        {diasSemana.map(d => <div key={d}>{d}</div>)}
       </div>
 
-      {/* Grid de dias */}
+      {/* Dias */}
       <div className="grid grid-cols-7 gap-2">
-        {/* Espaços vazios antes do primeiro dia */}
-        {Array.from({ length: diaInicioSemana }).map((_, i) => (
-          <div key={`empty-${i}`} className="aspect-square" />
+        {Array.from({ length: primeiroDiaSemana }).map((_, i) => (
+          <div key={i} />
         ))}
 
-        {/* Dias do mês */}
-        {dias.map((dia) => {
-          const agendamentosDia = getAgendamentosDoDia(dia)
-          const hoje = isHoje(dia)
-          const selecionada = isSelecionada(dia)
-          const passado = isPastDate(dia)
+        {Array.from({ length: diasNoMes }, (_, i) => {
+          const dia = i + 1
+          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`
+
+          const ags = agendamentosPorData[dateStr] ?? []
+          const passado = isPastDate(dateStr)
+          const selecionado = selectedDate === dateStr
+          const isHoje =
+            dateStr ===
+            `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`
 
           return (
             <button
-              key={dia}
-              onClick={() => {
-                if (passado) return // Não permite selecionar datas passadas
-                const dataStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
-                onDateSelect?.(dataStr)
-              }}
+              key={dateStr}
               disabled={passado}
+              aria-label={`Selecionar dia ${dia}`}
+              onClick={() => !passado && onDateSelect?.(dateStr)}
               className={cn(
-                "aspect-square rounded-lg border-2 p-2 text-left transition-all",
-                "flex flex-col gap-1 min-h-[80px]",
-                !passado && "hover:scale-105 cursor-pointer",
+                "relative min-h-[72px] sm:min-h-[90px] rounded-lg border p-2 text-left transition",
+                "focus:outline-none focus:ring-2 focus:ring-primary",
                 passado && "opacity-40 cursor-not-allowed",
-                hoje && !passado && "border-primary ring-2 ring-primary/50",
-                selecionada && !passado && "border-accent bg-accent/20",
-                !hoje && !selecionada && !passado && "border-border hover:border-accent",
-                agendamentosDia.length > 0 && "bg-card/50"
+                !passado && "hover:border-primary",
+                selecionado && "border-primary bg-primary/10",
+                isHoje && "ring-2 ring-primary/40"
               )}
             >
-              {/* Número do dia */}
-              <span
-                className={cn(
-                  "text-sm font-semibold",
-                  hoje && "text-primary",
-                  selecionada && !hoje && "text-accent-foreground",
-                  !hoje && !selecionada && "text-foreground"
-                )}
-              >
-                {dia}
-              </span>
+              <span className="text-sm font-semibold">{dia}</span>
 
-              {/* Agendamentos do dia */}
-              <div className="flex flex-col gap-1 flex-1 overflow-hidden">
-                {agendamentosDia.slice(0, 2).map((agendamento) => (
+              <div className="mt-1 flex flex-col gap-1">
+                {ags.slice(0, 2).map(a => (
                   <div
-                    key={agendamento.id}
+                    key={a.id}
                     className={cn(
-                      "text-xs px-1.5 py-0.5 rounded border truncate",
-                      getStatusColor(agendamento.status),
-                      "text-foreground"
+                      "text-[10px] sm:text-xs px-1 py-0.5 rounded border truncate",
+                      getStatusColor(a.status)
                     )}
-                    title={`${agendamento.time} - ${agendamento.clientName} (${agendamento.service})`}
                   >
-                    <span className="font-medium">{agendamento.time}</span> {agendamento.clientName.substring(0, 8)}
+                    <b>{a.time}</b> {a.clientName}
                   </div>
                 ))}
-                {agendamentosDia.length > 2 && (
-                  <div className="text-xs text-muted-foreground px-1.5">
-                    +{agendamentosDia.length - 2} mais
-                  </div>
+
+                {ags.length > 2 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    +{ags.length - 2} mais
+                  </span>
                 )}
               </div>
             </button>
           )
         })}
       </div>
-
-      {/* Legenda */}
-      <div className="mt-6 flex flex-wrap gap-4 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/50" />
-          <span className="text-muted-foreground">Confirmado</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-yellow-500/20 border border-yellow-500/50" />
-          <span className="text-muted-foreground">Pendente</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-red-500/20 border border-red-500/50" />
-          <span className="text-muted-foreground">Cancelado</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-blue-500/20 border border-blue-500/50" />
-          <span className="text-muted-foreground">Concluído</span>
-        </div>
-      </div>
     </div>
   )
 }
-

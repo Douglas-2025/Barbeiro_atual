@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-type RouteContext = {
-  params: {
-    id: string
-  }
-}
-
 // PUT /api/agendamentos/[id]
 // Por que: Atualiza um agendamento existente (ex: mudar status)
 // Uso: Frontend chama quando barbeiro confirma/cancela agendamento
-export async function PUT(request: NextRequest, { params }: RouteContext) {
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await context.params
     const body = await request.json()
-    const { id } = params
 
     // Busca agendamento atual para comparar mudanças
     // Por que: Precisamos saber o status anterior para detectar mudanças
@@ -144,9 +141,12 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 // DELETE /api/agendamentos/[id]
 // Por que: Remove agendamento do banco de dados
 // Uso: Frontend chama quando barbeiro exclui agendamento
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = params
+    const { id } = await context.params
     // Remove agendamento do banco
     // Por que: Permite excluir agendamentos definitivamente
     await prisma.agendamento.delete({
