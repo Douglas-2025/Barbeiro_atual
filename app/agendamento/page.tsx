@@ -281,7 +281,20 @@ export default function AgendamentoPage() {
               />
             </div>
 
-         
+            <div className="space-y-2">
+              <Label htmlFor="clientPhone" className="text-foreground font-medium">
+                Telefone para contato *
+              </Label>
+              <Input
+                id="clientPhone"
+                type="tel"
+                placeholder="(99) 99999-9999"
+                value={clientPhone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientPhone(e.target.value)}
+                required
+                className="bg-input border-border text-foreground focus:ring-2 focus:ring-primary"
+              />
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="clientWhatsApp" className="text-foreground font-medium">
