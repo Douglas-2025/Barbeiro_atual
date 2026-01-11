@@ -283,7 +283,7 @@ export default function AgendamentoPage() {
 
             <div className="space-y-2">
               <Label htmlFor="clientPhone" className="text-foreground font-medium">
-                Telefone para contato *
+                Telefone ou WhatsApp *
               </Label>
               <Input
                 id="clientPhone"
@@ -291,9 +291,9 @@ export default function AgendamentoPage() {
                 placeholder="(99) 99999-9999"
                 value={clientPhone}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setClientPhone(e.target.value)}
-                required
                 className="bg-input border-border text-foreground focus:ring-2 focus:ring-primary"
               />
+              <p className="text-xs text-muted-foreground">Informe um telefone de contato. Você também pode preencher somente o campo WhatsApp abaixo.</p>
             </div>
 
             <div className="space-y-2">
@@ -309,12 +309,11 @@ export default function AgendamentoPage() {
                 className="bg-input border-border text-foreground focus:ring-2 focus:ring-primary"
               />
               <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-4 py-3">
-  <p className="flex items-center gap-2 text-sm text-blue-600">
-    <span className="text-base">📱</span>
-    Informe seu WhatsApp para receber confirmações e lembretes automáticos.
-  </p>
-</div>
-
+                <p className="flex items-center gap-2 text-sm text-blue-600">
+                  <span className="text-base">📱</span>
+                  Informe seu WhatsApp para receber confirmações e lembretes automáticos.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -342,7 +341,7 @@ export default function AgendamentoPage() {
           <Button
             type="submit"
             size="lg"
-            disabled={!date || !service || !time || !clientName || !clientPhone || isSubmitting}
+            disabled={!date || !service || !time || !clientName || (!clientPhone && !clientWhatsApp) || isSubmitting}
             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             asChild={false}
           >
